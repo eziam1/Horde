@@ -1443,3 +1443,8 @@ hook.Add( "EntityTakeDamage", "DamageTypesOverride", function( target, dmginfo )
         end
     end
 end )
+
+hook.Add( "WeaponEquip", "DirtySellWeaponFix", function( wep, ply )
+    wep.OnDrop = function()
+    end
+end)
