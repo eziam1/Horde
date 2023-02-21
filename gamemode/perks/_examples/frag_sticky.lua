@@ -6,7 +6,7 @@ PERK.Hooks = {}
 PERK.Hooks.EntityTakeDamage = function(victim, dmginfo)
     local attacker = dmginfo:GetAttacker()
     local ent = dmginfo:GetInflictor()
-    if (victim:IsNPC() or victim:IsNextBot()) and IsValid(ent) and not ent.Sticked
+    if (victim:IsNPCHorde() or victim:IsNextBot()) and IsValid(ent) and not ent.Sticked
             and ent:GetClass() == "npc_grenade_frag" and IsValid(attacker)
             and not dmginfo:IsExplosionDamage() and attacker:Horde_GetPerk("frag_sticky") then
         ent.Sticked = true
@@ -26,7 +26,7 @@ PERK.Hooks.OnEntityCreated = function(ent)
                     ent2.Sticked = true
                     ent2:GetPhysicsObject():EnableMotion(false)
                     ent2:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-                elseif not ent2.Sticked and not (hit:IsNPC() or hit:IsNextBot() or hit:IsPlayer()) then
+                elseif not ent2.Sticked and not (hit:IsNPCHorde() or hit:IsNextBot() or hit:IsPlayer()) then
                     ent2.Sticked = true
                     timer.Simple(0, function() if IsValid(hit) and IsValid(ent2) then ent2:SetCollisionGroup(COLLISION_GROUP_DEBRIS) constraint.Weld(ent2, hit, 0, 0, 0, true, false) end end)
                 end

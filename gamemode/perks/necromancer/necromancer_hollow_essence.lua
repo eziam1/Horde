@@ -30,7 +30,7 @@ PERK.Hooks.Horde_OnUnsetPerk = function (ply, perk)
 
         if HORDE.player_drop_entities[ply:SteamID()] then
             for id, ent in pairs(HORDE.player_drop_entities[ply:SteamID()]) do
-                if ent:IsNPC() and ent:GetClass() == "npc_vj_horde_spectre" then
+                if ent:IsNPCHorde() and ent:GetClass() == "npc_vj_horde_spectre" then
                     ent:Remove()
                 end
             end

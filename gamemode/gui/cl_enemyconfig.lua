@@ -126,7 +126,7 @@ function PANEL:Init()
             editor:SetSize(150, height)
             editor:DockPadding(10, 10, 10, 10)
             editor:Dock(LEFT)
-            for i = 1, 50 do
+            for i = 1, 10 do
                 editor:AddChoice(i)
             end
             return editor
