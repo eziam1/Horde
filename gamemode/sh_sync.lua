@@ -17,7 +17,7 @@ end)
 
 function HORDE:SyncToLocal()
     if SERVER then return end
-    local ply = MySelf
+    local ply = LocalPlayer()
     if not ply:IsValid() then return end
     local local_levels = {}
     local local_exps = {}

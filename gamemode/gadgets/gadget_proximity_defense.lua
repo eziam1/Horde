@@ -17,7 +17,7 @@ GADGET.Hooks.Horde_UseActiveGadget = function (ply)
     ply:EmitSound("phx/kaboom.wav", 125, 100, 1, CHAN_AUTO)
 
     for _, ent in pairs(ents.FindInSphere(ply:GetPos(), 225)) do
-        if ent:IsNPC() then
+        if ent:IsNPCHorde() then
             ent:Horde_AddDebuffBuildup(HORDE.Status_Stun, 100, ply, ent:GetPos())
         end
     end

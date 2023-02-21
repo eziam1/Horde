@@ -20,7 +20,7 @@ GADGET.Hooks.Horde_UseActiveGadget = function (ply)
 
     local ent = util.TraceLine(util.GetPlayerTrace(ply)).Entity
 
-    if ent:IsValid() and ent:IsNPC() and (not ent:GetNWEntity("HordeOwner"):IsValid()) then
+    if ent:IsValid() and ent:IsNPCHorde() and (not ent:GetNWEntity("HordeOwner"):IsValid()) then
         local id = ent:GetCreationID()
         timer.Remove("Horde_DeathMarkExpire" .. id)
         if ply.Horde_Death_Mark_Target and ply.Horde_Death_Mark_Target:IsValid() and ply.Horde_Death_Mark_Target ~= ent then
@@ -63,7 +63,7 @@ end
 
 GADGET.Hooks.Horde_OnEnemyKilled = function(victim, killer, wpn)
     if not victim.Horde_Has_Death_Mark then return end
-    if not victim:IsValid() or not victim:IsNPC() or not killer:IsPlayer() then return end
+    if not victim:IsValid() or not victim:IsNPCHorde() or not killer:IsPlayer() then return end
     local health = victim:GetMaxHealth()
     local dmg = DamageInfo()
     dmg:SetAttacker(victim.Horde_Has_Death_Mark)

@@ -13,6 +13,8 @@ MUTATION.Hooks.Horde_OnSetMutation = function(ent, mutation)
 
             if ent.AnimationPlaybackRate then
                 ent.AnimationPlaybackRate = ent.AnimationPlaybackRate * 1.5
+            elseif ent.PlaybackMult then
+                ent.PlaybackMult = ent.PlaybackMult * 1.5
             else
                 ent:SetPlaybackRate(ent:GetPlaybackRate() * 1.5)
             end
@@ -24,6 +26,8 @@ MUTATION.Hooks.Horde_OnUnsetMutation = function (ent, mutation)
     if not ent:IsValid() or mutation ~= "frenzy" then return end
     if ent.AnimationPlaybackRate then
         ent.AnimationPlaybackRate = ent.AnimationPlaybackRate / 1.5
+    elseif ent.PlaybackMult then
+        ent.PlaybackMult = ent.PlaybackMult / 1.5
     else
         ent:SetPlaybackRate(ent:GetPlaybackRate() / 1.5)
     end

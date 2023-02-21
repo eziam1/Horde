@@ -39,7 +39,7 @@ end
 
 GADGET.Hooks.Horde_OnMinionDamageTaken = function(target, dmg)
     if CLIENT then return end
-    if target:IsNPC() and target.Horde_Has_Void_Shield then
+    if target:IsNPCHorde() and target.Horde_Has_Void_Shield then
         net.Start("Horde_Void_Shield_Remove")
             net.WriteEntity(target)
         net.Broadcast()

@@ -252,7 +252,9 @@ hook.Add("PlayerSpawn", "Horde_Economy_Sync", function (ply)
     if HORDE.start_game and HORDE.current_break_time <= 0 then
         if ply:IsValid() then
             ply:KillSilent()
-            HORDE:SendNotification("You will respawn next wave.", 0, ply)
+            net.Start("Horde_LegacyNotification")
+            net.WriteString("You will respawn next wave.")
+            net.Send(ply)
         end
     end
 
@@ -310,7 +312,7 @@ end)
 
 hook.Add("PlayerDroppedWeapon", "Horde_Economy_Drop", function (ply, wpn)
     if not ply:IsValid() then return end
-    if ply:IsNPC() then return end
+    if ply:IsNPCHorde() then return end
     local class = wpn:GetClass()
     if HORDE.items[class] then
         local item = HORDE.items[class]
@@ -341,7 +343,7 @@ end)
 
 hook.Add("PlayerCanPickupWeapon", "Horde_Economy_Pickup", function (ply, wpn)
     if not ply:IsValid() then return false end
-    if ply:IsNPC() then return true end
+    if ply:IsNPCHorde() then return true end
     if HORDE.items[wpn:GetClass()] then
         local item = HORDE.items[wpn:GetClass()]
         if (ply:Horde_GetWeight() - item.weight < 0) then
@@ -428,8 +430,9 @@ net.Receive("Horde_BuyItem", function (len, ply)
                 ply:Horde_AddSkullTokens(-skull_tokens)
                 if item.entity_properties.is_arccw_attachment and item.entity_properties.is_arccw_attachment == true then
                     -- ArcCW support
-                    ArcCW:PlayerGiveAtt(ply, class, 1)
-                    ArcCW:PlayerSendAttInv(ply)
+                    //ArcCW:PlayerGiveAtt(ply, class, 1)
+                    //ArcCW:PlayerSendAttInv(ply)
+                    CustomizableWeaponry.giveAttachments(ply, {class})
                 else
                     ply:Give(class)
                 end
@@ -589,7 +592,10 @@ net.Receive("Horde_BuyItem", function (len, ply)
             ply:SelectWeapon(class)
         end
 
-        HORDE:SendNotification("You bought " .. item.name .. ".", 0, ply)
+        net.Start("Horde_LegacyNotification")
+        net.WriteString("You bought " .. item.name .. ".")
+        net.WriteInt(0,2)
+        net.Send(ply)
         ply:Horde_SyncEconomy()
     end
 end)
@@ -646,7 +652,10 @@ net.Receive("Horde_SellItem", function (len, ply)
     local class = net.ReadString()
     local canSell, why = hook.Call("CanSell", HORDE, ply, class)
     if canSell == false then
-        HORDE:SendNotification(why or "You can't sell this.", 1, ply)
+        net.Start("Horde_LegacyNotification")
+        net.WriteString(why or "You can't sell this.")
+        net.WriteInt(1,2)
+        net.Send(ply)
         return
     end
     if ply:HasWeapon(class) then
@@ -666,7 +675,7 @@ net.Receive("Horde_SellItem", function (len, ply)
                         ent.Horde_Minion_Respawn = nil
                         timer.Remove("Horde_ManhackRespawn" .. ent:GetCreationID())
                         ent:Remove()
-                        if not ent:IsNPC() then
+                        if not ent:IsNPCHorde() then
                             if ply.Horde_drop_entities and ply.Horde_drop_entities[class] then
                                 ply.Horde_drop_entities[class] = ply.Horde_drop_entities[class] - 1
                                 if ply.Horde_drop_entities[class] == 0 then
@@ -716,11 +725,17 @@ net.Receive("Horde_SelectClass", function (len, ply)
     if not ply:IsValid() then return end
     if ply:Alive() then
         if HORDE.start_game and HORDE.current_break_time <= 0 then
-            HORDE:SendNotification("You cannot change class after a wave has started.", 1, ply)
+            net.Start("Horde_LegacyNotification")
+            net.WriteString("You cannot change class after a wave has started.")
+            net.WriteInt(1,2)
+            net.Send(ply)
             return
         end
         if GetConVar("horde_testing_unlimited_class_change"):GetInt() == 0 and HORDE.player_class_changed[ply:SteamID()] then
-            HORDE:SendNotification("You cannot change class more than once per wave.", 1, ply)
+            net.Start("Horde_LegacyNotification")
+            net.WriteString("You cannot change class more than once per wave.")
+            net.WriteInt(1,2)
+            net.Send(ply)
             return
         end
     end
@@ -728,7 +743,10 @@ net.Receive("Horde_SelectClass", function (len, ply)
     local subclass_name = net.ReadString()
 
     if ply:Horde_GetSubclassUnlocked(subclass_name) == false then
-        HORDE:SendNotification("Subclass " .. subclass_name " is not unlocked on this server.", 1, ply)
+        net.Start("Horde_LegacyNotification")
+        net.WriteString("Subclass " .. subclass_name " is not unlocked on this server.")
+        net.WriteInt(1,2)
+        net.Send(ply)
         return
     end
     local class = HORDE.classes[name]
@@ -770,8 +788,10 @@ net.Receive("Horde_SelectClass", function (len, ply)
     net.Start("Horde_ToggleShop")
     net.Send(ply)
 
-    HORDE:SendNotification("You changed class to " .. class.name, 0, ply)
-
+    net.Start("Horde_LegacyNotification")
+    net.WriteString("You changed class to " .. class.name)
+    net.WriteInt(0,2)
+    net.Send(ply)
     if GetConVar("horde_testing_unlimited_class_change"):GetInt() == 0 then
         HORDE.player_class_changed[ply:SteamID()] = true
     end
@@ -784,7 +804,10 @@ net.Receive("Horde_BuyItemAmmoPrimary", function (len, ply)
     local class = net.ReadString()
     local count = net.ReadUInt(4)
     if not ply:HasWeapon(class) then
-        HORDE:SendNotification("You don't have this weapon!", 0, ply)
+        net.Start("Horde_LegacyNotification")
+        net.WriteString("You don't have this weapon!")
+        net.WriteInt(0,2)
+        net.Send(ply)
         return
     end
     
@@ -801,7 +824,10 @@ net.Receive("Horde_BuyItemAmmoSecondary", function (len, ply)
     if not ply:IsValid() or not ply:Alive() then return end
     local class = net.ReadString()
     if not ply:HasWeapon(class) then
-        HORDE:SendNotification("You don't have this weapon!", 0, ply)
+        net.Start("Horde_LegacyNotification")
+        net.WriteString("You don't have this weapon!")
+        net.WriteInt(0,2)
+        net.Send(ply)
         return
     end
     
@@ -821,7 +847,10 @@ net.Receive("Horde_BuyItemUpgrade", function (len, ply)
     if not ply:IsValid() or not ply:Alive() then return end
     local class = net.ReadString()
     if not ply:HasWeapon(class) then
-        HORDE:SendNotification("You don't have this weapon!")
+        net.Start("Horde_LegacyNotification")
+        net.WriteString("You don't have this weapon!")
+        net.WriteInt(0,2)
+        net.Send(ply)
         return
     end
 

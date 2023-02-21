@@ -75,6 +75,58 @@ function ParseFile()
         ::cont::
     end
 end
+
+function ParseFileEntSpawner()
+    f = file.Open("maps/graphs/"..game.GetMap()..".ain","rb","GAME")
+    if not f then
+        return
+    end
+    local ainet_ver = ReadInt(f)
+    local map_ver = ReadInt(f)
+    if ainet_ver ~= AINET_VERSION_NUMBER then
+        MsgN("Unknown graph file")
+        return
+    end
+
+    local numNodes = ReadInt(f)
+    if numNodes < 0 then
+        MsgN("Graph file has an unexpected amount of nodes")
+        return
+    end
+
+    for i = 1,numNodes do
+        local v = Vector(f:ReadFloat(),f:ReadFloat(),f:ReadFloat())
+        local yaw = f:ReadFloat()
+        local flOffsets = {}
+        for i = 1,NUM_HULLS do
+            flOffsets[i] = f:ReadFloat()
+        end
+        local nodetype = f:ReadByte()
+        local nodeinfo = ReadUShort(f)
+        local zone = f:ReadShort()
+
+        if nodetype == 4 then
+            goto cont
+        end
+        
+        local node = {
+            pos = v,
+            yaw = yaw,
+            offset = flOffsets,
+            type = nodetype,
+            info = nodeinfo,
+            zone = zone,
+            neighbor = {},
+            numneighbors = 0,
+            link = {},
+            numlinks = 0
+        }
+
+        table.insert(EntSpawnerPos,node)
+
+        ::cont::
+    end
+end
 M.ParseFile = ParseFile
 
 return M

@@ -23,12 +23,6 @@ function ENT:Initialize()
 
     self.Removing = false
     self:PhysWake()
-
-    timer.Simple(5, function ()
-        if self:IsValid() then
-            self:Remove()
-        end
-    end)
 end
 
 function ENT:SetMoney(money)

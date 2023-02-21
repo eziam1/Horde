@@ -29,7 +29,7 @@ GADGET.Hooks.Horde_UseActiveGadget = function (ply)
         })
     end
 
-    if tr.Hit and IsValid(tr.Entity) and (tr.Entity:IsNPC() || tr.Entity:IsPlayer() || tr.Entity:GetClass() == "npc_vj_horde_antlion") and tr.Entity:Health() > 0 then
+    if tr.Hit and IsValid(tr.Entity) and (tr.Entity:IsNPCHorde() || tr.Entity:IsPlayer() || tr.Entity:GetClass() == "npc_vj_horde_antlion") and tr.Entity:Health() > 0 then
         if SERVER then
             if ply.Horde_Healing_Target and ply.Horde_Healing_Target ~= tr.Entity then
                 if ply.Horde_Healing_Beam and ply.Horde_Healing_BeamTarget and ply.Horde_Healing_Beam:IsValid() and ply.Horde_Healing_BeamTarget:IsValid() then
@@ -52,7 +52,7 @@ GADGET.Hooks.Horde_UseActiveGadget = function (ply)
             ply.Horde_Healing_Beam = beam
             ply.Horde_Healing_BeamTarget = beamtarget
             ply.Horde_Healing_Target = tr.Entity
-            if ply.Horde_Healing_Target:IsNPC() and not ply.Horde_Healing_Target:GetNWEntity("HordeOwner"):IsValid() then
+            if ply.Horde_Healing_Target:IsNPCHorde() and not ply.Horde_Healing_Target:GetNWEntity("HordeOwner"):IsValid() then
                 ply.Horde_Healing_Target_Hostile = true
                 beam:SetKeyValue("effect_name", "medicgun_beam_red")
             else

@@ -169,7 +169,9 @@ local function GetEnemiesData()
             -- Integrity
             for _, enemy in pairs(t) do
                 if enemy.name == nil or enemy.name == "" or enemy.class == nil or enemy.class == "" or enemy.weight == nil or enemy.wave == nil then
-                    HORDE:SendNotification("Enemy config file validation failed! Please update your file or delete it.", 0)
+                    net.Start("Horde_LegacyNotification")
+                        net.WriteString("Enemy config file validation failed! Please update your file or delete it.")
+                    net.WriteInt(1,2)
                     return
                 else
                     if not enemy.weapon then

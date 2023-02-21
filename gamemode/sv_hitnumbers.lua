@@ -12,12 +12,12 @@ hook.Add("PostEntityTakeDamage", "Horde_HitnumbersDamagePost", function(target, 
 
 	if not ( attackerIsPlayer ) then return end
 	if attacker == target  then return end
-    if not target:IsNPC() then return end
+   	if not target:IsNPCHorde() then return end
 
 	local dmgAmount = dmginfo:GetDamage()
 	local dmgType   = dmginfo:GetDamageType()
 	-- Get damage position.
-	local pos = dmginfo:GetDamagePosition()
+	local pos = target:GetPos()+vector_up*((target:OBBMins().z+target:OBBMaxs().z)/2)
 	--[[if dmgType == DMG_CLUB or dmgType == DMG_SLASH then
 		pos = util.TraceHull({
 			start  = attacker:GetShootPos(),

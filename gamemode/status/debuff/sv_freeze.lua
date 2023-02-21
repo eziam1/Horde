@@ -11,7 +11,7 @@ function entmeta:Horde_AddFreezeEffect(duration)
         self.Horde_Freeze = 1
 
         -- VJ
-        if self:IsNPC() then
+        if self:IsNPCHorde() then
             self:SetSchedule(SCHED_IDLE_STAND)
             timer.Simple(0, function ()
                 if not self:IsValid() then return end
@@ -31,7 +31,7 @@ end
 
 function entmeta:Horde_RemoveFreeze()
     if not self:IsValid() then return end
-    if self:IsNPC() then
+    if self:IsNPCHorde() then
         if self.Horde_StoredAnimationPlaybackRateFreeze then
             self.AnimationPlaybackRate = self.Horde_StoredAnimationPlaybackRateFreeze
         else

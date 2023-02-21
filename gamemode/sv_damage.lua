@@ -1,6 +1,35 @@
 local plymeta = FindMetaTable("Player")
 local entmeta = FindMetaTable("Entity")
 
+hook.Add("EntityTakeDamage", "DenniMaizeInvulnFrames", function (target, dmg)
+    if !IsValid(target) then return end
+    if !target:IsPlayer() then return end
+    if(IsValid(dmg:GetAttacker()) && !dmg:IsFallDamage()) then
+        if((target.DashInvuln or 0) > CurTime() && CurTime() > (target.DashInvulnCooldown or 0)) then
+            target.DashInvulnCooldown = CurTime() + 0.5
+            target:SetHealth(math.min(target:Health()+math.Round(math.max(dmg:GetDamage(),1),0),target:GetMaxHealth()))
+            return true
+        end
+        if (target.InvulnFrames or 0) < CurTime() then
+            target.InvulnFrames = CurTime() + 0.3
+            target.InvulnFramesLastDMG = dmg:GetDamage()
+            if(!target:HasGodMode()) then
+                target:EmitSound("eziam/player/damaged-"..math.random(1,15)..".wav",60,math.Rand(80,120),0.7,CHAN_ITEM)
+            end
+        else
+            if(dmg:GetDamage() > (target.InvulnFramesLastDMG or 0)) then
+                target.InvulnFrames = CurTime() + 0.3
+                target.InvulnFramesLastDMG = dmg:GetDamage()
+                if(!target:HasGodMode()) then
+                    target:EmitSound("eziam/player/damaged-"..math.random(1,15)..".wav",60,math.Rand(80,120),0.7,CHAN_ITEM)
+                end
+            elseif(CurTime() > ((target.DashTimer or 0)-((target.DashTimer or 0)/1.5))) then
+                return true
+            end
+        end
+    end
+end)
+
 HORDE.DMG_CALCULATED = 1
 HORDE.DMG_OVER_TIME = 3
 HORDE.DMG_SPLASH = 2
@@ -67,7 +96,7 @@ function HORDE:ApplyDamage(npc, hitgroup, dmginfo)
     end
 
     -- DMG_BURN for some reason does not apply, convert this to something else
-    if dmginfo:GetInflictor():GetClass() == "entityflame" then
+    if IsValid(dmginfo:GetInflictor()) && dmginfo:GetInflictor():GetClass() == "entityflame" then
         dmginfo:SetDamagePosition(npc:GetPos())
         dmginfo:SetDamage(npc:Horde_GetIgniteDamageTaken())
     else
@@ -139,7 +168,7 @@ end
 
 function HORDE:ApplyDamageInRadius(pos, radius, dmginfo, callback)
     for _, ent in pairs(ents.FindInSphere(pos, radius)) do
-        if ent:IsNPC() and HORDE:IsPlayerOrMinion(ent) ~= true then
+        if ent:IsNPCHorde() and HORDE:IsPlayerOrMinion(ent) ~= true then
             ent:TakeDamageInfo(dmginfo)
             dmginfo:SetDamagePosition(ent:GetPos())
             if callback then
@@ -235,7 +264,7 @@ hook.Add("EntityTakeDamage", "Horde_ApplyDamageTaken", function (target, dmg)
     if dmg:GetAttacker():IsPlayer() and (dmg:GetInflictor() == dmg:GetAttacker()) then return true end
 
     -- Prevent damage from skill explosions (e.g. Rip and Tear, Chain Reaction, Kamikaze)
-    if dmg:GetInflictor():IsNPC() and dmg:GetAttacker():IsPlayer() then return true end
+    if dmg:GetInflictor():IsNPCHorde() and dmg:GetAttacker():IsPlayer() then return true end
     
     -- Prevent minion from damaging players
     if HORDE:IsPlayerMinion(dmg:GetInflictor()) or HORDE:IsPlayerMinion(dmg:GetAttacker()) then return true end
@@ -392,14 +421,14 @@ end)
 
 -- Enemy damage.
 hook.Add("EntityTakeDamage", "Horde_MutationDamage", function (target, dmg)
-    if target:IsValid() and target:IsNPC() and dmg:GetInflictor():IsWorld() and dmg:GetAttacker():IsNPC() then
+    if target:IsValid() and target:IsNPCHorde() and dmg:GetInflictor():IsWorld() and dmg:GetAttacker():IsNPCHorde() then
         return true
     end
 end)
 
 -- Main target does not take splash damage
 hook.Add("EntityTakeDamage", "Horde_SplashDamage", function (target, dmg)
-    if target:IsValid() and target:IsNPC() and dmg:GetInflictor() == target and dmg:GetAttacker():IsPlayer() and dmg:GetDamageCustom() == HORDE.DMG_SPLASH then
+    if target:IsValid() and target:IsNPCHorde() and dmg:GetInflictor() == target and dmg:GetAttacker():IsPlayer() and dmg:GetDamageCustom() == HORDE.DMG_SPLASH then
         return true
     end
 end)
@@ -413,6 +442,6 @@ end)
 
 hook.Add("OnNPCKilled", "Horde_OnNPCKilledHook", function (victim, killer, wpn)
     if not killer:IsPlayer() then return end
-    if not victim:IsValid() or not victim:IsNPC() or not killer:IsPlayer() then return end
+    if not victim:IsValid() or not victim:IsNPCHorde() or not killer:IsPlayer() then return end
     hook.Run("Horde_OnNPCKilled", victim, killer, wpn)
 end)

@@ -29,8 +29,8 @@ function PANEL:OnCursorExited()
 end
 
 function PANEL:IsUpgraded()
-    return MySelf:HasWeapon(self.item.class) and
-    ((MySelf:Horde_GetCurrentSubclass() == "Gunslinger" and self.item.category == "Pistol")
+    return LocalPlayer():HasWeapon(self.item.class) and
+    ((LocalPlayer():Horde_GetCurrentSubclass() == "Gunslinger" and self.item.category == "Pistol")
     or (self.item.class == "horde_void_projector" or self.item.class == "horde_solar_seal" or self.item.class == "horde_astral_relic" or self.item.class == "horde_carcass" or self.item.class == "horde_pheropod"))
 end
 
@@ -52,7 +52,7 @@ function PANEL:SetData(item, description_panel, infusion_panel)
     end
 
     if self:IsUpgraded() then
-        self.loc_name = self.loc_name .. " +" .. tostring(MySelf:Horde_GetUpgrade(self.item.class))
+        self.loc_name = self.loc_name .. " +" .. tostring(LocalPlayer():Horde_GetUpgrade(self.item.class))
     end
 
     self.description = item.description
@@ -61,12 +61,12 @@ function PANEL:SetData(item, description_panel, infusion_panel)
     self.skull_tokens = item.skull_tokens or 0
     self.description_panel = description_panel
     self.infusion_panel = infusion_panel
-    self.player_class = MySelf:Horde_GetClass().name
+    self.player_class = LocalPlayer():Horde_GetClass().name
 
     self.level_satisfy = true
     if self.item.levels then
         for class, level in pairs(self.item.levels) do
-            if MySelf:Horde_GetLevel(class) < level then
+            if LocalPlayer():Horde_GetLevel(class) < level then
                 self.level_satisfy = false
                 break
             end
@@ -135,10 +135,10 @@ function PANEL:SetData(item, description_panel, infusion_panel)
         pnl:SetTextInset(15, 0)
     end
 
-    if MySelf:Horde_GetInfusion(self.item.class) == HORDE.Infusion_None then
+    if LocalPlayer():Horde_GetInfusion(self.item.class) == HORDE.Infusion_None then
         infusion_btn:SetText(translate.Get("Game_Infusion") .. ": " .. translate.Get("Infusion_None"))
     else
-        infusion_btn:SetText(translate.Get("Game_Infusion") .. ": " .. translate.Get("Infusion_" .. HORDE.Infusion_Names[MySelf:Horde_GetInfusion(self.item.class)]))
+        infusion_btn:SetText(translate.Get("Game_Infusion") .. ": " .. translate.Get("Infusion_" .. HORDE.Infusion_Names[LocalPlayer():Horde_GetInfusion(self.item.class)]))
     end
     infusion_btn:SetFont("Category")
 
@@ -225,22 +225,22 @@ end
 
 function PANEL:Paint()
     if self.item ~= nil then
-        local is_rich = MySelf:Horde_GetMoney() >= self.item.price and MySelf:Horde_GetSkullTokens() >= (self.item.skull_tokens or 0) and MySelf:Horde_GetWeight() >= self.item.weight
+        local is_rich = LocalPlayer():Horde_GetMoney() >= self.item.price and LocalPlayer():Horde_GetSkullTokens() >= (self.item.skull_tokens or 0) and LocalPlayer():Horde_GetWeight() >= self.item.weight
         surface.SetDrawColor(self.bg_color)
         surface.DrawRect(0, 0, self:GetWide(), self:GetTall())
         surface.SetFont("Item")
 
-        if MySelf:HasWeapon(self.item.class) or MySelf:Horde_GetGadget() == self.item.class or (MySelf.Horde_drop_entities and MySelf.Horde_drop_entities[self.item.class]) then
+        if LocalPlayer():HasWeapon(self.item.class) or LocalPlayer():Horde_GetGadget() == self.item.class or (LocalPlayer().Horde_drop_entities and LocalPlayer().Horde_drop_entities[self.item.class]) then
             self.price_panel:SetTextColor(HORDE.color_crimson)
             self.price_panel:SetText("Owned")
             self.weight_panel_text:SetTextColor(HORDE.color_crimson)
             self.weight_panel_icon:SetImageColor(HORDE.color_crimson)
-            if self.item.category == "Attachment" or self.item.category == "Gadget" or self.item.category == "Equipment" or self.item.category == "Explosive" or self.item.category == "Special" then
+            if self.item.category == "Attachment" or self.item.category == "Gadget" or self.item.category == "Equipment" or self.item.category == "Explosive" or self.item.category == "Special" or self.item.category == "Summon" then
             else
                 self.infusion_btn:SetVisible(true)
             end
 
-            local infusion = MySelf:Horde_GetInfusion(self.item.class)
+            local infusion = LocalPlayer():Horde_GetInfusion(self.item.class)
             if infusion == HORDE.Infusion_None then
                 self.infusion_btn:SetText(translate.Get("Game_Infusion") .. ": " .. translate.Get("Infusion_None"))
             else
@@ -279,7 +279,7 @@ function PANEL:Paint()
             end
         end
 
-        if (not MySelf:HasWeapon(self.item.class)) and (not self.level_satisfy) then
+        if (not LocalPlayer():HasWeapon(self.item.class)) and (not self.level_satisfy) then
             surface.SetTextColor(Color(80,80,80))
         else
             surface.SetTextColor(Color(255,255,255))
@@ -287,11 +287,11 @@ function PANEL:Paint()
         surface.SetTextPos(10, self:GetTall() / 2 - 10)
         surface.DrawText(self.loc_name)
 
-        if self.item.entity_properties and self.item.entity_properties.is_arccw_attachment and ArcCW.AttachmentTable[self.item.class] then
-            local icon = ArcCW.AttachmentTable[self.item.class].Icon
+        if self.item.entity_properties and self.item.entity_properties.is_arccw_attachment then
+            local icon = CustomizableWeaponry.registeredAttachmentsSKey[self.item.class].displayIcon
             if icon then
                 surface.SetDrawColor(255, 255, 255, 255)
-                surface.SetMaterial(icon)
+                surface.SetTexture(icon)
                 surface.DrawTexturedRect(self:GetWide() - 128, -10, 60, 60)
                 self.price_panel:SetText(tostring(self.price) .. "$   ")
             end

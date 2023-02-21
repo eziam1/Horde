@@ -50,7 +50,7 @@ function VJ_DestroyCombineTurret() end
 hook.Add("EntityTakeDamage", "Horde_EntityTakeDamage", function (target, dmg)
     if not target:IsValid() then return end
     if target:IsPlayer() then
-        if dmg:GetAttacker():IsNPC() then
+        if dmg:GetAttacker():IsNPCHorde() then
             if dmg:GetAttacker():GetNWEntity("HordeOwner"):IsPlayer() then
                 -- Prevent minions from hurting players
                 return true
@@ -102,8 +102,8 @@ hook.Add("EntityTakeDamage", "Horde_EntityTakeDamage", function (target, dmg)
                 dmg:ScaleDamage(dmg:GetAttacker():GetVar("damage_scale"))
             end
         end
-    elseif target:IsNPC() then
-        if not dmg:GetAttacker():IsNPC() then return end
+    elseif target:IsNPCHorde() then
+        if not dmg:GetAttacker():IsNPCHorde() then return end
         if target:GetClass() == dmg:GetAttacker() and dmg:GetAttacker() == dmg:GetInflictor() then return true end
         if dmg:IsDamageType(DMG_POISON) and dmg:GetAttacker():GetClass() == "npc_headcrab_poison" then
             dmg:SetDamage(0)

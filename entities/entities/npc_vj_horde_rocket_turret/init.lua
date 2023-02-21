@@ -124,7 +124,7 @@ end
 
 VJ.AddNPC("Rocket Turret","npc_vj_horde_rocket_turret", "Horde")
 
-function ENT:Follow(ply)
+function ENT:FollowPlayerCode(key, ply, caller, data)
 	if self:GetNWEntity("HordeOwner") == ply then
 		self:PhysicsInit(SOLID_VPHYSICS)
 		local p = self:GetPos()

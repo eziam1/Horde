@@ -40,7 +40,7 @@ PERK.Hooks.OnEntityCreated = function (ent)
     if CLIENT then return end
     timer.Simple(0.1, function()
         local ply = ent:GetNWEntity("HordeOwner")
-        if ply:IsPlayer() and ply:Horde_GetPerk("engineer_base") and ent:IsNPC() then
+        if ply:IsPlayer() and ply:Horde_GetPerk("engineer_base") and ent:IsNPCHorde() then
             if ent:GetClass() == "npc_turret_floor" then
                 if ent:GetMaxHealth() < 400 then
                     if ent.Horde_Is_Mini_Sentry then

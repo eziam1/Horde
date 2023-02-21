@@ -28,7 +28,7 @@ PERK.Hooks.Horde_OnUnsetPerk = function(ply, perk)
 
         if not HORDE.player_drop_entities[ply:SteamID()] then return end
         for id, ent in pairs(HORDE.player_drop_entities[ply:SteamID()]) do
-            if ent:IsNPC() and ent.Horde_Has_Antimatter_Shield then
+            if ent:IsNPCHorde() and ent.Horde_Has_Antimatter_Shield then
                 net.Start("Horde_Antimatter_Shield_Remove")
                     net.WriteEntity(ent)
                 net.Broadcast()
@@ -69,7 +69,7 @@ end
 
 PERK.Hooks.Horde_OnMinionDamageTaken = function(target, dmg)
     if CLIENT then return end
-    if target:IsNPC() and target.Horde_Has_Antimatter_Shield then
+    if target:IsNPCHorde() and target.Horde_Has_Antimatter_Shield then
         local health = target:Horde_GetShieldHealth()
         if health > 0 then
             target:Horde_SetShieldHealth(health - dmg:GetDamage())

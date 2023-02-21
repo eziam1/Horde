@@ -165,6 +165,7 @@ SWEP.Attachments = {
 SWEP.Animations = {
     ["idle"] = {
         Source = "idle01",
+        TPAnim = ACT_HL2MP_IDLE_PISTOL,
     },
     ["draw"] = {
         Source = "draw",
@@ -181,7 +182,7 @@ SWEP.Animations = {
     ["reload"] = {
         Source = "reload",
         Time = 1,
-        TPAnim = ACT_HL2MP_GESTURE_RELOAD_PISTOL,
+        TPAnim = ACT_HL2MP_GESTURE_RELOAD_REVOLVER,
         SoundTable = {
 						{s = "weapons/pistol/pistol_reload1.wav", t = 0},
 					},

@@ -155,10 +155,13 @@ SWEP.Animations = {
         Time = 0.5,
         ShellEjectAt = 0,
     },
-    ["reload_empty"] = {
+    ["reload"] = {
         Source = "reload",
-        Time = 0.75,
-        Checkpoints = {16, 30},
+        Time = 1,
+        TPAnim = ACT_HL2MP_GESTURE_RELOAD_PISTOL,
         FrameRate = 30,
+        LHIK = true,
+        LHIKIn = 0.5,
+        LHIKOut = 0.2,
     },
 }

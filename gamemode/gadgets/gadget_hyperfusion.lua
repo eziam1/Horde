@@ -28,7 +28,7 @@ GADGET.Hooks.Horde_UseActiveGadget = function (ply)
         if ent:IsPlayer() then
             local healinfo = HealInfo:New({amount=20, healer=ply})
             HORDE:OnPlayerHeal(ent, healinfo)
-        elseif ent:IsNPC() then
+        elseif ent:IsNPCHorde() then
             local dmg = DamageInfo()
             dmg:SetDamage(65)
             dmg:SetDamageType(DMG_NERVEGAS)

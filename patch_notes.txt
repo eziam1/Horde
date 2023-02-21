@@ -1,21 +1,15 @@
--- UI Overhaul
-
--- Damage Display System
-
--- New Subclass: Hatcher
--- Gunslinger reworked.
-
--- New Gadgets:
+-- New Master Tier Gadgets:
     - Survivor: Ultimate Booster
+    - Assault: 
+    - Heavy: 
+    - Berserker: Blade Blast
+    - Medic: Defibrillator
     - Demolition: Nuke
-    - Engineer: Quantum Tunnel / Voidout effects changed. 
-    - ???
+    - Engineer: 
+    - Cremator: Ion Cannon
+    - Warden:
+    - Ghost:
 
 -- Perk balances:
     - Ghost - Brain Snap: Increased freeze cooldown
-    - Demolition - Pressurized Warhead: Reduced percentage-base damage
-    - Artificer - Reduced Solar Orb base burn damage. Increased Floating Chaos energy usage. 
-    - Necromancer - Increased Spectre base health, reduced Spectre incremental health (so at max level health remains the same.)
-
-
-- Check weapons when changing subclass
+    - Gunslinger - Poach: Changed healing to base on enemy health percentage and increase effect radius.

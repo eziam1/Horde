@@ -22,11 +22,7 @@ end
 
 net.Receive("Horde_SyncEconomy", function(length)
     local ply = net.ReadEntity()
-    local prev_money = ply.Horde_money or 0
     ply.Horde_money = net.ReadInt(32)
-    if MySelf == ply then
-        HORDE:PlayMoneyNotification(ply.Horde_money - prev_money, ply.Horde_money)
-    end
     ply.Horde_skull_tokens = net.ReadInt(32)
     ply.Horde_weight = net.ReadInt(32)
 
@@ -40,5 +36,5 @@ end)
 
 net.Receive("Horde_SyncMaxWeight", function (len, ply)
     local max_weight = net.ReadUInt(5)
-    MySelf.Horde_max_weight = max_weight
+    LocalPlayer().Horde_max_weight = max_weight
 end)

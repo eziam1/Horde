@@ -9,9 +9,9 @@ PERK.Params = {
 
 PERK.Hooks = {}
 PERK.Hooks.Horde_OnEnemyKilled = function(victim, killer, inflictor)
-    if not victim:IsValid() or not victim:IsNPC() or not killer:IsPlayer() then return end
+    if not victim:IsValid() or not victim:IsNPCHorde() or not killer:IsPlayer() then return end
     if not killer:Horde_GetPerk("demolition_chain_reaction") then return end
-    if inflictor:IsNPC() then return end -- Prevent infinite chains
+    if inflictor:IsNPCHorde() then return end -- Prevent infinite chains
     local p = math.random()
     if p <= 0.30 then
         local dmg = victim:GetMaxHealth() * 0.50

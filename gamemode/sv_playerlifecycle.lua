@@ -62,7 +62,10 @@ function HORDE:GameEnd(status)
     end)
 
     if status == "DEFEAT" then
-        HORDE:SendNotification("All players are dead!", 1)
+        net.Start("Horde_LegacyNotification")
+        net.WriteString("All players are dead!")
+        net.WriteInt(1,2)
+        net.Broadcast()
     end
 
     if status == "VICTORY" then
@@ -430,18 +433,14 @@ function HORDE:PlayerInit(ply)
     ply:Horde_SyncExp()
     for _, other_ply in pairs(player.GetAll()) do
         if other_ply == ply then goto cont end
-        local subclass = other_ply:Horde_GetCurrentSubclass()
-        net.Start("Horde_SyncExp")
-            net.WriteEntity(other_ply)
-            net.WriteString(subclass)
-            net.WriteUInt(other_ply:Horde_GetExp(subclass), 32)
-            net.WriteUInt(other_ply:Horde_GetLevel(subclass), 8)
-        net.Send(ply)
-
-        net.Start("Horde_SyncPerk")
-            net.WriteEntity(other_ply)
-            net.WriteTable(other_ply.Horde_PerkChoices[subclass])
-        net.Send(ply)
+        for name, class in pairs(HORDE.classes) do
+            net.Start("Horde_SyncExp")
+                net.WriteEntity(other_ply)
+                net.WriteUInt(class.order, 4)
+                net.WriteUInt(other_ply:Horde_GetExp(name), 32)
+                net.WriteUInt(other_ply:Horde_GetLevel(name), 8)
+            net.Send(ply)
+        end
         ::cont::
     end
     net.Start("Horde_SyncClientExps")
@@ -552,12 +551,18 @@ end)
 HORDE.VoteChangeMap = function (ply)
     HORDE.player_vote_map_change[ply] = 1
     if table.Count(HORDE.player_vote_map_change) == table.Count(player.GetAll()) then
-        HORDE:SendNotification("All players want to change map! Initiating map vote...", 0)
+        net.Start("Horde_LegacyNotification")
+        net.WriteString("All players want to change map! Initiating map vote...")
+        net.WriteInt(0,2)
+        net.Broadcast()
         timer.Simple(1, function ()
             HORDE:GameEnd("Change Map")
         end)
     else
-        HORDE:SendNotification(ply:GetName() .. " wants to change the map. (" .. tostring(table.Count(HORDE.player_vote_map_change)) .. "/" .. tostring(table.Count(player.GetAll())) .. ")", 0)
+        net.Start("Horde_LegacyNotification")
+    net.WriteString(ply:GetName() .. " wants to change the map. (" .. tostring(table.Count(HORDE.player_vote_map_change)) .. "/" .. tostring(table.Count(player.GetAll())) .. ")")
+        net.WriteInt(0,2)
+        net.Broadcast()
     end
 end
 
@@ -716,7 +721,6 @@ function HORDE:CheckAlivePlayers()
     end
 end
 
-
 hook.Add("PlayerDeathThink", "Horde_PlayerDeathThink", function (ply)
     --if GetConVarNumber("horde_enable_respawn") == 1 then return true end
     if HORDE.current_break_time > 0 then return true end
@@ -736,7 +740,9 @@ hook.Add("DoPlayerDeath", "Horde_DoPlayerDeath", function(victim)
         end end)
         return
     end
-    HORDE:SendNotification("You are dead. You will respawn next wave.", 1, victim)
+    net.Start("Horde_LegacyNotification")
+    net.WriteString("You are dead. You will respawn next wave.")
+    net.Send(victim)
     HORDE:CheckAlivePlayers()
 
     local tip = HORDE:GetTip()

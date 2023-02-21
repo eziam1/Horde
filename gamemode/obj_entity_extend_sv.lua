@@ -30,3 +30,7 @@ function meta:FindByNameHammer(name, activator, caller)
 	if name == "!caller" then return {caller} end
 	return ents.FindByName(name)
 end
+
+function meta:IsNPCHorde()
+	return self:IsNPC() or (self.Base && string.find(self.Base,"drg"))
+end

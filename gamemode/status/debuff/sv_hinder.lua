@@ -6,7 +6,7 @@ function entmeta:Horde_AddHinder(inflictor, duration, more)
         self:Horde_RemoveHinder()
     end)
     if not self.Horde_Hinder then
-        hook.Run("Horde_PostEnemyDebuffApply", self, inflictor, HORDE.Status_Hinder, self:GetPos())
+        hook.Run("Horde_PostEnemyDebuffApply", self, inflictor, HORDE.Status_Hindered, self:GetPos())
     end
     self.Horde_Hinder = math.max(1, 1 * more)
 end
@@ -23,7 +23,7 @@ end
 hook.Add("EntityTakeDamage", "Horde_HinderDamageTaken", function(target, dmg)
     local attacker = dmg:GetAttacker()
     if attacker:IsValid() and attacker:Horde_GetHinder() and HORDE:IsPhysicalDamage(dmg) then
-        dmg:ScaleDamage(1 - 0.15 * attacker.Horde_Hinder)
+        dmg:ScaleDamage(1 - 0.15 * target.Horde_Hinder)
     end
 end)
 

@@ -14,7 +14,7 @@ MUTATION.Hooks.Horde_OnSetMutation = function(ent, mutation)
 end
 
 MUTATION.Hooks.Horde_OnPlayerDamageTaken = function(ply, dmg, bonus)
-    if dmg:GetAttacker():IsNPC() and dmg:GetAttacker():Horde_HasMutation("shadow") then
+    if dmg:GetAttacker():IsNPCHorde() and dmg:GetAttacker():Horde_HasMutation("shadow") then
         dmg:SetDamageType(DMG_REMOVENORAGDOLL)
     end
 end

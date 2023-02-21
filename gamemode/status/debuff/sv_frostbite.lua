@@ -11,8 +11,10 @@ function entmeta:Horde_AddFrostbiteEffect(duration)
         self.Horde_Frostbite = 1
 
         -- VJ
-        if self:IsNPC() then
-            self:SetSchedule(SCHED_IDLE_STAND)
+        if self:IsNPCHorde() then
+            if(self.SetSchedule) then
+                self:SetSchedule(SCHED_IDLE_STAND)
+            end
             timer.Simple(0, function ()
                 if not self:IsValid() then return end
                 if not self.Horde_StoredAnimationPlaybackRateFrostbite then
@@ -56,7 +58,7 @@ function entmeta:Horde_RemoveFrostbite()
     if not self:IsValid() then return end
     local id = self:EntIndex()
     timer.Remove("FrostbiteEffect" .. id)
-    if self:IsNPC() then
+    if self:IsNPCHorde() then
         if self.Horde_StoredAnimationPlaybackRateFrostbite then
             self.AnimationPlaybackRate = self.Horde_StoredAnimationPlaybackRateFrostbite
         else

@@ -28,15 +28,13 @@ end
 PERK.Hooks.Horde_GetFallDamage = function(ply, speed, bonus)
     if ply:Horde_GetPerk("carcass_pneumatic_legs") then
         bonus.less = bonus.less * 0.1
-        local dmg = math.max(0, math.ceil(0.2418 * speed - 141.75)) * 2
-        print(dmg)
+        local dmg = math.max(0, math.ceil(0.2418 * speed - 141.75))
         if dmg < 10 then return end
         local dmginfo = DamageInfo()
         dmginfo:SetAttacker(ply)
         dmginfo:SetInflictor(ply)
-        dmginfo:SetDamageType(DMG_GENERIC)
-        dmginfo:SetDamage(dmg)
-        dmginfo:SetDamagePosition(ply:GetPos())
+        dmginfo:SetDamageType(DMG_CRUSH)
+        dmginfo:SetDamage(dmg * 1.5)
         util.BlastDamageInfo(dmginfo, ply:GetPos(), 200)
         local e = EffectData()
             e:SetNormal(Vector(0,0,1))

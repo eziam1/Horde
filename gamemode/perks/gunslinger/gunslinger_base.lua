@@ -1,13 +1,13 @@
 PERK.PrintName = "Gunslinger Base"
 PERK.Description = [[
 {1} increased Pistol damage. ({2} per level, up to {3}).
-Your pistols can be upgraded in shop for increased damage.
 
 Press SHIFT+E to apply Hunter's Mark on an enemy.
 Hunter's Mark lasts for 5 seconds.
 You can apply 1 Hunter's Mark at a time.
 Enemies killed under Hunter's Mark has {4} chance to drop extra cash.
 
+Your pistols can be upgraded for increased damage.
 Has access to all pistols.]]
 PERK.Icon = "materials/subclasses/gunslinger.png"
 PERK.Params = {
@@ -50,7 +50,7 @@ PERK.Hooks.Horde_OnUnsetPerk = function(ply, perk)
 
         if not HORDE.player_drop_entities[ply:SteamID()] then return end
         for id, ent in pairs(HORDE.player_drop_entities[ply:SteamID()]) do
-            if ent:IsNPC() and ent.Horde_Has_Antimatter_Shield then
+            if ent:IsNPCHorde() and ent.Horde_Has_Antimatter_Shield then
                 net.Start("Horde_Antimatter_Shield_Remove")
                     net.WriteEntity(ent)
                 net.Broadcast()
@@ -82,7 +82,7 @@ PERK.Hooks.Horde_UseActivePerk = function (ply)
 
     local ent = util.TraceLine(util.GetPlayerTrace(ply)).Entity
 
-    if ent:IsValid() and ent:IsNPC() and (not ent:GetNWEntity("HordeOwner"):IsValid()) then
+    if ent:IsValid() and ent:IsNPCHorde() and (not ent:GetNWEntity("HordeOwner"):IsValid()) then
         local range = 640000
         local delay = 5
         if ply:Horde_GetPerk("gunslinger_puncture") then

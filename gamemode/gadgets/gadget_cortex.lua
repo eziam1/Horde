@@ -15,7 +15,7 @@ GADGET.Hooks.Horde_UseActiveGadget = function (ply)
     local npcs = ents.FindInSphere(ply:GetPos(), 200)
     if not npcs then return end
     for _, ent in pairs(npcs) do
-        if ent:IsNPC() and (not ent:GetNWEntity("HordeOwner"):IsPlayer()) then
+        if ent:IsNPCHorde() and (not ent:GetNWEntity("HordeOwner"):IsPlayer()) then
             ply:Horde_AddAdrenalineStack()
             if ent:GetVar("is_elite") then ply:Horde_AddAdrenalineStack() end
         end

@@ -107,7 +107,7 @@ function metapoison:IsValid()
 end
 
 function metapoison:IsValidTarget(ent)
-    return IsValid(ent) and ent:Health() > 0 and (ent:IsPlayer() or ent:IsNPC())
+    return IsValid(ent) and ent:Health() > 0 and (ent:IsPlayer() or ent:IsNPCHorde())
 end
 
 function metapoison:Activate()

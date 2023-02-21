@@ -48,6 +48,8 @@ function entmeta:Horde_GetBossProperties()
     return self.horde_boss_properties
 end
 
+EntSpawnerPos = EntSpawnerPos or {}
+
 hook.Add("InitPostEntity", "Horde_Init", function()
     HORDE.ai_nodes = {}
     local horde_nodes = ents.FindByClass("info_horde_enemy_spawn")
@@ -66,6 +68,7 @@ hook.Add("InitPostEntity", "Horde_Init", function()
     else
         ParseFile()
     end
+    ParseFileEntSpawner()
 
     if not table.IsEmpty(horde_boss_nodes) then
         HORDE.boss_spawns = {}
@@ -129,7 +132,7 @@ hook.Add("EntityKeyValue", "Horde_EntityKeyValue", function(ent)
 end)
 
 function HORDE:OnEnemyKilled(victim, killer, weapon)
-    if victim:IsNPC() and not victim:GetVar("horde_killed") then
+    if victim:IsNPCHorde() and not victim:GetVar("horde_killed") then
         victim:SetVar("horde_killed", true)
         hook.Run("Horde_OnEnemyKilled", victim, killer, weapon)
         if victim.Horde_Gadget_On_Death then
@@ -240,7 +243,7 @@ end
 -- Record statistics
 hook.Add("PostEntityTakeDamage", "Horde_PostDamage", function (ent, dmg, took)
     if took then
-        if ent:IsNPC() then
+        if ent:IsNPCHorde() then
             if dmg:GetAttacker():IsPlayer() then
                 local id = dmg:GetAttacker():SteamID()
                 if not HORDE.player_damage[id] then HORDE.player_damage[id] = 0 end
@@ -248,11 +251,15 @@ hook.Add("PostEntityTakeDamage", "Horde_PostDamage", function (ent, dmg, took)
                 ent:Horde_SetMostRecentAttacker(dmg:GetAttacker())
                 if GetConVar("horde_testing_display_damage"):GetInt() == 1 then
                     local dmgtype = HORDE:GetDamageType(dmg)
+                    net.Start("Horde_LegacyNotification")
                         if dmgtype == HORDE.DMG_PURE then
-                            HORDE:SendNotification("You dealt " .. dmg:GetDamage() .. " damage to " .. ent:GetClass(), 0, dmg:GetAttacker())
+                            net.WriteString("You dealt " .. dmg:GetDamage() .. " damage to " .. ent:GetClass())
+                            net.WriteInt(0,2)
                         else
-                            HORDE:SendNotification("You dealt " .. dmg:GetDamage() .. " " .. HORDE.DMG_TYPE_STRING[dmgtype] .. " damage to " .. ent:GetClass(), 0, dmg:GetAttacker())
+                            net.WriteString("You dealt " .. dmg:GetDamage() .. " " .. HORDE.DMG_TYPE_STRING[dmgtype] .. " damage to " .. ent:GetClass())
+                            net.WriteInt(0,2)
                         end
+                    net.Send(dmg:GetAttacker())
                 end
 
                 local boss_properties = ent:Horde_GetBossProperties()
@@ -279,17 +286,21 @@ hook.Add("PostEntityTakeDamage", "Horde_PostDamage", function (ent, dmg, took)
                     end
                 end
             end
-        elseif ent:IsPlayer() and dmg:GetAttacker():IsNPC() then
+        elseif ent:IsPlayer() and dmg:GetAttacker():IsNPCHorde() then
             local id = ent:SteamID()
             if not HORDE.player_damage_taken[id] then HORDE.player_damage_taken[id] = 0 end
             HORDE.player_damage_taken[id] = HORDE.player_damage_taken[id] + dmg:GetDamage()
             if GetConVar("horde_testing_display_damage"):GetInt() == 1 then
                 local dmgtype = HORDE:GetDamageType(dmg)
-                if dmgtype == HORDE.DMG_PURE then
-                    HORDE:SendNotification("You received " .. dmg:GetDamage() .. " damage from " .. dmg:GetAttacker():GetClass(), ent)
-                else
-                    HORDE:SendNotification("You received " .. dmg:GetDamage() .. " " .. HORDE.DMG_TYPE_STRING[dmgtype] ..  " damage from " .. dmg:GetAttacker():GetClass(), 0, ent)
-                end
+                net.Start("Horde_LegacyNotification")
+                    if dmgtype == HORDE.DMG_PURE then
+                        net.WriteString("You received " .. dmg:GetDamage() .. " damage from " .. dmg:GetAttacker():GetClass())
+                        net.WriteInt(0,2)
+                    else
+                        net.WriteString("You received " .. dmg:GetDamage() .. " " .. HORDE.DMG_TYPE_STRING[dmgtype] ..  " damage from " .. dmg:GetAttacker():GetClass())
+                        net.WriteInt(0,2)
+                    end
+                net.Send(ent)
             end
         end
     end
@@ -304,7 +315,7 @@ hook.Add("ScaleNPCDamage", "Horde_HeadshotCounter", function (npc, hitgroup, dmg
 end)
 
 hook.Add("EntityRemoved", "Horde_EntityRemoved", function(ent)
-    if (ent:IsNPC() or ent:IsNextBot()) and ent:Horde_GetMostRecentAttacker() then
+    if (ent:IsNPCHorde() or ent:IsNextBot()) and ent:Horde_GetMostRecentAttacker() then
         HORDE:OnEnemyKilled(ent, ent:Horde_GetMostRecentAttacker())
     else
         if HORDE.spawned_enemies[ent:EntIndex()] then
@@ -361,10 +372,10 @@ end
 -- Spawns a Horde enemy at the give position.
 -- The enemy is tracked by Horde.
 function HORDE:SpawnEnemy(enemy, pos)
-    local npc_info = HORDE.NPCS[enemy.class]
-    if not npc_info then
-        HORDE:SendNotification("NPC " .. enemy.class .. " does not exist.", 1)
-    end
+    local npc_info = list.Get("NPC")[enemy.class]
+    /*if not npc_info then
+        print("[HORDE] NPC does not exist in ", list.Get("NPC"))
+    end*/
 
     local spawned_enemy = ents.Create(enemy.class)
     spawned_enemy:SetPos(pos)
@@ -374,18 +385,20 @@ function HORDE:SpawnEnemy(enemy, pos)
     HORDE.spawned_enemies[spawned_enemy:EntIndex()] = true
     spawned_enemy:Horde_SetName(enemy.name)
 
-    if npc_info["Model"] then
-        spawned_enemy:SetModel(npc_info["Model"])
-    end
+    if(npc_info) then
+        if npc_info["Model"] then
+            spawned_enemy:SetModel(npc_info["Model"])
+        end
 
-    if npc_info["SpawnFlags"] then
-        -- We need to cleanup corpses otherwise it's going to be a mess
-        spawned_enemy:SetKeyValue("spawnflags", bit.bor(npc_info["SpawnFlags"], SF_NPC_FADE_CORPSE))
-    end
+        if npc_info["SpawnFlags"] then
+            -- We need to cleanup corpses otherwise it's going to be a mess
+            spawned_enemy:SetKeyValue("spawnflags", bit.bor(npc_info["SpawnFlags"], SF_NPC_FADE_CORPSE))
+        end
 
-    if npc_info["KeyValues"] then
-        for k, v in pairs(npc_info["KeyValues"]) do
-            spawned_enemy:SetKeyValue(k, v)
+        if npc_info["KeyValues"] then
+            for k, v in pairs(npc_info["KeyValues"]) do
+                spawned_enemy:SetKeyValue(k, v)
+            end
         end
     end
 
@@ -458,7 +471,7 @@ function HORDE:SpawnEnemy(enemy, pos)
     if enemy.weapon then
         if enemy.weapon == "" or enemy.weapon == "_gmod_none" then
             -- Do nothing
-        elseif enemy.weapon == "_gmod_default" then
+        elseif enemy.weapon == "_gmod_default" && npc_info then
             local wpns = npc_info["Weapons"]
             if wpns then
                 local wpn = wpns[math.random(#wpns)]
@@ -525,7 +538,14 @@ function HORDE:SpawnEnemy(enemy, pos)
             end
         end
     end
-
+    --[[spawned_enemy.DoRelationshipCheck = function (ent)
+        if ent:IsPlayer() or ent:GetNWEntity("HordeOwner"):IsValid() then return true end
+        return false
+    end]]--
+    
+    --spawned_enemy:AddRelationship("player D_HT 99")
+    --VJ_AddSpeed(spawned_enemy, 4)
+    
     hook.Run("HordeEnemySpawn", spawned_enemy)
     return spawned_enemy
 end
@@ -674,7 +694,10 @@ function HORDE:SpawnEnemies(enemies, valid_nodes)
 
                 -- This in fact should not happen
                 if table.IsEmpty(horde_current_enemies_list) then
-                    HORDE:SendNotification("Current enemy list is empty!", 1)
+                    net.Start("Horde_LegacyNotification")
+                        net.WriteString("Current enemy list is empty!")
+                        net.WriteInt(1,2)
+                    net.Broadcast()
                     return
                 end
 
@@ -783,7 +806,9 @@ function HORDE:SpawnBoss(enemies, valid_nodes)
             net.WriteInt(spawned_enemy:GetMaxHealth(),32)
             net.WriteInt(spawned_enemy:Health(),32)
             if enemy.boss_properties.music then
-                boss_music_loop = CreateSound(game.GetWorld(), enemy.boss_properties.music)
+                local filter = RecipientFilter()
+                filter:AddAllPlayers()
+                boss_music_loop = CreateSound(game.GetWorld(), enemy.boss_properties.music, filter)
                 boss_music_loop:SetSoundLevel(0)
                 if enemy.boss_properties.music_duration and enemy.boss_properties.music_duration > 0 then
                     timer.Create("Horde_BossMusic", enemy.boss_properties.music_duration, 0, function()
@@ -891,19 +916,42 @@ function HORDE:InBreak()
     return horde_in_break
 end
 
+local randoments = {}
+
+local RandomEntSpawns_Common = {
+    "sfi_health",
+    "horde_money",
+    "horde_money",
+    "horde_money",
+}
+
+local RandomEntSpawns_Rare = {
+    "sfi_shield",
+}
+
+local RandomEntSpawns_VeryRare = {
+    "sfi_upgrade",
+}
+
 -- Starts a wave.
 -- 1. Sets the spawn configuration for the current wave.
 -- 2. Decides the boss to spawn, if there is one available.
 function HORDE:WaveStart()
     if (HORDE.enemies_normalized == nil) or table.IsEmpty(HORDE.enemies_normalized) then
         HORDE:HardResetDirector()
-        HORDE:SendNotification("Enemies list is empty. Config the enemy list or no enemies wil spawn.", 1)
+        net.Start("Horde_LegacyNotification")
+        net.WriteString("Enemies list is empty. Config the enemy list or no enemies wil spawn.")
+        net.WriteInt(1,2)
+        net.Broadcast()
         HORDE.start_game = false
         return
     end
 
     if HORDE.endless == 0 and table.IsEmpty(HORDE.enemies_normalized[HORDE.current_wave]) then
-        HORDE:SendNotification("No enemy config set for this wave. Falling back to previous wave settings.", 1)
+        net.Start("Horde_LegacyNotification")
+        net.WriteString("No enemy config set for this wave. Falling back to previous wave settings.")
+        net.WriteInt(1,2)
+        net.Broadcast()
     end
 
     local current_wave = ((HORDE.current_wave - 1) % HORDE.max_max_waves) + 1
@@ -1007,6 +1055,25 @@ function HORDE:WaveStart()
             ent:Input("onwavestart", ent, ent, current_wave)
         end
     end
+    for _, v in pairs(ents.GetAll()) do
+        if(v.RandEnt) then
+            v:Remove()
+        end
+    end
+    for _, v in pairs(ents.FindByClass("prop_ragdoll")) do
+        v:Remove()
+    end
+    randoments = {}
+    for i=0, 12 do
+        local rng = math.random(1,100)
+        if(rng >= 20) then
+            RandomEntitySpawn(table.Random(RandomEntSpawns_Common), 1)
+        elseif(rng <= 2) then
+            RandomEntitySpawn(table.Random(RandomEntSpawns_VeryRare), 1)
+        else
+            RandomEntitySpawn(table.Random(RandomEntSpawns_Rare), 1)
+        end
+    end
 end
 
 -- Ends a wave.
@@ -1049,7 +1116,10 @@ function HORDE:WaveEnd()
         boss_music_loop:Play()
     else
         HORDE:BroadcastBreakCountDownMessage(0, true)
-        HORDE:SendNotification("Wave Completed!", 0)
+        net.Start("Horde_LegacyNotification")
+            net.WriteString("Wave Completed!")
+            net.WriteInt(0,2)
+        net.Broadcast()
 
         -- Send Tips
         local tip = HORDE:GetTip()
@@ -1072,7 +1142,7 @@ function HORDE:WaveEnd()
 
     if GetConVarNumber("horde_npc_cleanup") == 1 then
         for _, ent in pairs(ents.GetAll()) do
-            if ent:IsNPC() and not ent:GetNWEntity("HordeOwner"):IsPlayer() then
+            if ent:IsNPCHorde() and not ent:GetNWEntity("HordeOwner"):IsPlayer() then
                 ent:Remove()
             end
         end
@@ -1086,7 +1156,10 @@ function HORDE:WaveEnd()
     -- Global Wave End Effects
     if horde_perk_progress <= 4 and HORDE:Horde_GetWaveForPerk(horde_perk_progress) and HORDE.current_wave >= HORDE:Horde_GetWaveForPerk(horde_perk_progress) then
         timer.Simple(1, function()
-            HORDE:SendNotification("Tier " .. horde_perk_progress .. " perks have been unlocked!", 0)
+            net.Start("Horde_LegacyNotification")
+                net.WriteString("Tier " .. horde_perk_progress .. " perks have been unlocked!")
+                net.WriteInt(0,2)
+            net.Broadcast()
             horde_perk_progress = horde_perk_progress + 1
         end)
     end
@@ -1094,7 +1167,7 @@ function HORDE:WaveEnd()
         -- Minion life recovery
         if HORDE.player_drop_entities[ply:SteamID()] then
             for _, ent in pairs(HORDE.player_drop_entities[ply:SteamID()]) do
-                if ent:IsNPC() then
+                if ent:IsNPCHorde() then
                     ent:SetHealth(ent:GetMaxHealth())
                 end
             end
@@ -1170,7 +1243,10 @@ function HORDE:Direct()
 
     if not HORDE.ai_nodes or table.IsEmpty(HORDE.ai_nodes) then
         print("[HORDE] No info_node(s) in map! NPCs will not spawn.")
-        HORDE:SendNotification("Map has no info nodes! NPCs will not spawn.", 1)
+        net.Start("Horde_LegacyNotification")
+            net.WriteString("Map has no info nodes! NPCs will not spawn.")
+            net.WriteInt(1,2)
+        net.Broadcast()
         return
     end
 
@@ -1263,3 +1339,141 @@ timer.Create("Horde_Main", director_interval, 0, function ()
         print(err)
     end
 end)
+
+local math = math
+local math_random = math.random
+
+local table = table
+local table_IsEmpty = table.IsEmpty
+
+function RandomEntitySpawn(name, amount)
+    local postable = {}
+    if(!table_IsEmpty(EntSpawnerPos)) then
+        local spotchecks = 500+amount
+        local currenchecks = 0
+        while currenchecks < spotchecks do
+            local pox,poy,poz = table.Random(EntSpawnerPos)["pos"]
+            local pos = Vector(pox,poy,poz)
+            local tr3 = util.TraceHull( {
+                start = pos,
+                endpos = pos + Angle(math_random(-45,0),math_random(-180,180),0):Forward()*math_random(0,256),
+                mins = Vector(-64,-64,0),
+                maxs = Vector(64,64,72),
+                filter = function( ent ) 
+                    if ( ent:IsPlayer() ) then 
+                        return false
+                    else
+                        return true 
+                    end 
+                end,
+                mask = MASK_PLAYERSOLID
+            } )
+            local tr4 = util.TraceHull( {
+                start = tr3.HitPos,
+                endpos = tr3.HitPos + vector_up*-100000,
+                mins = Vector(-32,-32,0),
+                maxs = Vector(32,32,72),
+                filter = function( ent ) 
+                    if ( ent:IsPlayer() && ent:Team() != 0 ) then 
+                        return false
+                    else
+                        return true 
+                    end 
+                end,
+                mask = MASK_PLAYERSOLID
+            } )
+            local water = util.TraceHull( {
+                start = tr4.HitPos,
+                endpos = tr4.HitPos + vector_up*24,
+                 mins = Vector(-32,-32,0),
+                maxs = Vector(32,32,72),
+                mask = MASK_WATER
+            } )
+            if(!water.Hit) then
+                table.insert(postable,tr3.HitPos)
+            end
+            currenchecks = currenchecks + 1
+        end
+    end
+    for i=1, amount do
+        local ent = ents.Create(name)
+        if(!IsValid(ent)) then 
+            print("Entity Spawner: Invalid entity class name!")
+        return end
+        if(#postable <= 0) then 
+            print("Entity Spawner: No positions to spawn entities!")
+        return end
+        local rand = math_random(1,#postable)
+        ent:SetPos(postable[rand])
+        ent:Spawn()
+        ent:Activate()
+        ent.RandEnt = true
+        table.remove(postable,rand)
+    end
+end
+
+local dmgtypeovr = {
+    ["sfw_eblade"] = DMG_SHOCK,
+    ["the pocket anarchist"] = DMG_SLASH,
+    ["the night light"] = DMG_SLASH,
+    ["the kilroy warhammer"] = DMG_CLUB,
+    ["mc_weapon_sword_netherite"] = DMG_SLASH,
+    ["mc_weapon_sword_diamond"] = DMG_SLASH,
+    ["mc_weapon_axe_diamond"] = DMG_SLASH,
+    ["mc_weapon_axe_netherite"] = DMG_SLASH,
+    ["weapon_hl2axe"] = DMG_SLASH,
+    ["weapon_hl2hook"] = DMG_SLASH,
+    ["weapon_hl2pickaxe"] = DMG_SLASH,
+    ["weapon_hl2pipe"] = DMG_CLUB,
+    ["weapon_hl2shovel"] = DMG_CLUB,
+    ["the hometown slugger"] = DMG_SHOCK,
+    ["azbr_pr_reserve_ripper"] = DMG_SLASH,
+    ["weapon_bladebow"] = DMG_SLASH,
+    ["weapon_sbep_plasmacutter"] = DMG_SHOCK,
+    ["autoshot_minds"] = DMG_SHOCK,
+    ["doi_atow_bayonetcw"] = DMG_SLASH,
+    ["doi_atow_etoolus"] = DMG_CLUB,
+    ["doi_atow_etoolcw"] = DMG_SLASH,
+}
+
+local dmgscales = {
+    ["weapon_hl2axe"] = 6,
+    ["weapon_hl2hook"] = 6,
+    ["weapon_hl2pickaxe"] = 6,
+    ["weapon_hl2pipe"] = 6,
+    ["weapon_hl2shovel"] = 6,
+    ["the hometown slugger"] = 6.66,
+    ["mc_weapon_axe_diamond"] = 6.66,
+    ["mc_weapon_axe_netherite"] = 6.66,
+    ["mc_weapon_sword_diamond"] = 6.66,
+    ["mc_weapon_sword_netherite"] = 6.5,
+    ["the kilroy warhammer"] = 6,
+    ["the night light"] = 6,
+    ["the pocket anarchist"] = 6,
+    ["sfw_eblade"] = 6,
+    ["doi_atow_bayonetcw"] = 1.75,
+    ["doi_atow_etoolus"] = 2.25,
+    ["doi_atow_etoolcw"] = 2,
+    ["cw_l115"] = 2,
+    ["cw_svd_official"] = 1.5,
+    ["doi_atow_g43"] = 1.5,
+    ["doi_atow_k98k"] = 2,
+    ["doi_atow_enfield"] = 2,
+    ["doi_atow_m1garand"] = 1.5,
+    ["doi_atow_m1903a3"] = 2,
+    ["doi_atow_sw1917"] = 2,
+    ["doi_atow_webley"] = 2,
+}
+
+hook.Add( "EntityTakeDamage", "DamageTypesOverride", function( target, dmginfo )
+    if(!IsValid(dmginfo:GetAttacker()) or !dmginfo:GetAttacker():IsPlayer() or !IsValid(dmginfo:GetInflictor())) then return end
+    local wep = !dmginfo:GetInflictor():IsPlayer() && dmginfo:GetInflictor():GetClass() or (IsValid(dmginfo:GetAttacker():GetActiveWeapon()) && dmginfo:GetAttacker():GetActiveWeapon():GetClass())
+    if(wep != nil) then
+        if(dmgtypeovr[wep]) then
+            dmginfo:SetDamageType(dmgtypeovr[wep])
+        end
+         if(dmgscales[wep]) then
+            dmginfo:ScaleDamage(dmgscales[wep])
+        end
+    end
+end )

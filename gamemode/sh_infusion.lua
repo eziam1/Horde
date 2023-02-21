@@ -200,7 +200,7 @@ end
 
 if CLIENT then
 net.Receive("Horde_SyncInfusion", function(len, ply)
-    MySelf.Horde_Infusions = net.ReadTable()
+    LocalPlayer().Horde_Infusions = net.ReadTable()
 end)
 end
 

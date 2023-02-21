@@ -13,7 +13,7 @@ PERK.Hooks.Horde_OnSetPerk = function(ply, perk)
     if SERVER and perk == "engineer_fusion" then
         if not HORDE.player_drop_entities[ply:SteamID()] then return end
         for id, ent in pairs(HORDE.player_drop_entities[ply:SteamID()]) do
-            if ent:IsNPC() then
+            if ent:IsNPCHorde() then
                 timer.Create("Horde_Fusion" .. id, 1, 0, function()
                     if not ent:IsValid() or not ply:IsValid() or not ply:Horde_GetPerk("engineer_fusion") then timer.Remove("Horde_Fusion" .. id) return end
                     if ent.Horde_Debuff_Active and ent.Horde_Debuff_Active[HORDE.Status_Decay] then return end
@@ -30,7 +30,7 @@ PERK.Hooks.OnEntityCreated = function (ent)
     timer.Simple(0.1, function()
         if not ent:IsValid() then return end
         local ply = ent:GetNWEntity("HordeOwner")
-        if ply:IsValid() and ply:Horde_GetPerk("engineer_fusion") and ent:IsNPC() then
+        if ply:IsValid() and ply:Horde_GetPerk("engineer_fusion") and ent:IsNPCHorde() then
             local id = ent:GetCreationID()
             timer.Create("Horde_Fusion" .. id, 1, 0, function()
                 if not ent:IsValid() or not ply:IsValid() or not ply:Horde_GetPerk("engineer_fusion") then timer.Remove("Horde_Fusion" .. id) return end

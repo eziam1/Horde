@@ -56,6 +56,12 @@ end
 function ENT:Detonate(hitpos, ent)
     if !self:IsValid() or self.Removing then return end
 
+    local attacker = self
+
+    if self.Owner:IsValid() then
+        attacker = self.Owner
+    end
+
     self.Removing = true
     self:Remove()
 end
